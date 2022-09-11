@@ -1,0 +1,1 @@
+import tsukika.__main__
