@@ -152,3 +152,4 @@ cython_debug/
 #.idea/
 tsukika/config.py
 tsukika/config.json
+db/test.db
