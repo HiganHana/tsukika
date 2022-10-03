@@ -9,8 +9,8 @@ base = declarative_base()
 class Profile(base):
     __tablename__ = 'profile'
     discord_id = Column(Integer, primary_key=True)
-    trophy_point : datetime = Column(Date, nullable=False, default=datetime.utcnow().date())
     fields : typing.Dict[str, str] = Column(JSON, nullable=False, default={})
+    custom : typing.Dict[str, str] = Column(JSON, nullable=False, default={})
     
 class Trophy(base):
     __tablename__ = 'trophy'
@@ -41,4 +41,20 @@ class TrophyRecord(base):
             fixate=fixate
         )
         
+"""
+class HoyoBaseImg(base):
+    __tablename__ = 'base_img'
+    __bind_key__ = 'hoyovalk'
+    id : int = Column(Integer, primary_key=True)
+    img : bytes = Column(LargeBinary, nullable=False)
+
+class HoyoCombinedImg(base):
+    __tablename__ = 'combined_img'
+    __bind_key__ = 'hoyovalk'
+    id : str = Column(String(55), primary_key=True)
+    img : bytes = Column(LargeBinary, nullable=False)
     
+    @classmethod
+    def combine(cls, img1, img2, img3, img4):
+        pass
+"""
