@@ -1,3 +1,4 @@
+import typing
 from discord.ext import commands
 from discord import app_commands
 import discord
@@ -10,16 +11,36 @@ class cog_profile(commands.GroupCog):
     def __init__(self, bot):
         self.bot = bot
         
-    def get_or_create_profile(self, discord_id : int):
+    def get_or_create_profile(self, discord_id : typing.Union[int, str, discord.User]):
         """
         creates a new profile if user does not exist
 
         """
+        if isinstance(discord_id, discord.User):
+            discord_id = discord_id.id
+        
+        discord_id = int(discord_id)
+        
         profile = mf.db.session.query(Profile).filter_by(discord_id=discord_id).first()
+        
         if profile is None:
             profile : Profile = Profile(discord_id=discord_id)
             mf.db.session.add(profile)
             mf.db.session.commit()
+        
+        return profile
+    
+    def get_profile(self, discord_id : typing.Union[int, str, discord.User]):
+        """
+        returns a profile if user exists
+
+        """
+        if isinstance(discord_id, discord.User):
+            discord_id = discord_id.id
+        
+        discord_id = int(discord_id)
+        
+        profile = mf.db.session.query(Profile).filter_by(discord_id=discord_id).first()
         
         return profile
     
