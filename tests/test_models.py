@@ -3,6 +3,7 @@ from tsukika.models import Profile, Trophy, TrophyRecord, base
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from contextlib import contextmanager
+from sqlalchemy.orm.attributes import flag_modified
 
 class t_models(unittest.TestCase):
     def setUp(self):
@@ -56,3 +57,18 @@ class t_models(unittest.TestCase):
             self.assertEqual(test.unique_string, "1234567890_test trophy")
             self.assertEqual(test.discord_id, 1234567890)
             self.assertEqual(test.trophy_name, "test trophy")
+            
+    def test_update_profile_field(self):
+        with self.session_scope() as session:
+            profile = Profile(discord_id=1234567890)
+            session.add(profile)
+            session.commit()
+            
+            profile : Profile = session.query(Profile).filter_by(discord_id=1234567890).first()
+            profile.fields["test"] = "test"
+            flag_modified(profile, "fields")
+            session.merge(profile)
+            session.commit()
+            
+            test = session.query(Profile).filter_by(discord_id=1234567890).first()
+            self.assertEqual(test.fields["test"], "test")
