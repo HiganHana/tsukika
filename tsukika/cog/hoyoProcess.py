@@ -14,37 +14,39 @@ class hoyoProcessor:
 
     async def get_honkai_all_battlesuits(self, uid : int) -> typing.List[genshin.models.FullBattlesuit]:
         try:
-            return await self.hoyo_client.get_honkai_battlesuits(uid), True
-        except:
-            return None, False
+            uid = int(uid)
+            return await self.hoyo_client.get_honkai_battlesuits(uid), None
+        except genshin.errors.GenshinException as e:
+            return None, e.msg
     
     async def get_honkai_character(self, uid : int, character : typing.Union[int, str]) -> typing.Optional[genshin.models.FullBattlesuit]:
         try:
+            uid=int(uid)
             battlesuits = await self.hoyo_client.get_honkai_battlesuits(uid)
-        except:
-            return None, False
+        except genshin.errors.GenshinException as e:
+            return None, e.msg
         
         for b in battlesuits:
             if isinstance(character, int) and b.id == character:
-                return b, True
+                return b, None
             elif isinstance(character, str) and b.name.lower() == character.lower().strip():    
-                return b, True
+                return b, None
             elif (
                 isinstance(character, str) 
                 and character.lower().strip() in self.close_matches
                 and b.name.lower() == self.close_matches[character.lower().strip()].lower()
             ):
-                return b, True
+                return b, None
     
         # do fuzzy matching
         if not isinstance(character, int):
-            return None, True
+            return None, None
         
         characters_owned = [b.name for b in battlesuits]
         close_match = process.extractOne(character, characters_owned)
         self.close_matches[character] = close_match[0].name
 
-        return close_match, True
+        return close_match, None
     
 HOYO_PROCESSOR = hoyoProcessor()
 

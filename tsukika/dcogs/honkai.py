@@ -22,17 +22,18 @@ matching_rairty = {
 reverse_matching_rairty = {v: k for k, v in matching_rairty.items()}
 
 class honkai_characters_view(View):
-    def __init__(self, author : discord.User, data : typing.List[FullBattlesuit]):
+    def __init__(self, author : discord.User, user: discord.User, data : typing.List[FullBattlesuit]):
         super().__init__()
         # add page buttons 
         self.author = author
+        self.target_user =user
         self.current_page = 0
         self.data = data
         
     @classmethod
-    def get_embed(cls, data : typing.List[FullBattlesuit], page : int):
+    def get_embed(cls, username: str, data : typing.List[FullBattlesuit], page : int):
         embed = Embedx.Info(
-            title="Honkai Characters",
+            title=f"Honkai Characters for {username}",
             description="Here are all the characters you have (page {}/{}).".format(page + 1, len(data) // 5 + 1)
         )
         
@@ -58,7 +59,7 @@ class honkai_characters_view(View):
         
     async def interaction_check(self, interaction : Interaction):
         # check if user is the same
-        if interaction.user.id != self.author.id:
+        if interaction.user.id != self.author.id or interaction.user.id != self.target_user.id:
             await interaction.response.send_message("You are not the same person!", ephemeral=True)
             return False
         return True
@@ -68,18 +69,21 @@ class honkai_characters_view(View):
         if self.current_page == 0:
             return await interaction.response.send_message("You are already on the first page!", ephemeral=True)
         self.current_page -= 1
-        await interaction.response.edit_message(embed=self.get_embed(self.data, self.current_page))
+        await interaction.response.edit_message(embed=self.get_embed(self.target_user.name,self.data, self.current_page))
 
     @discord.ui.button(label='Next', style=discord.ButtonStyle.green)
     async def next(self, interaction : Interaction, button : discord.ui.Button):
         if self.current_page == len(self.data) // 5:
             return await interaction.response.send_message("You are already on the last page!", ephemeral=True)
         self.current_page += 1
-        await interaction.response.edit_message(embed=self.get_embed(self.data, self.current_page))        
+        await interaction.response.edit_message(embed=self.get_embed(self.target_user.name, self.data, self.current_page))        
 
 
 class cog_honkai(commands.GroupCog, group_name="honkai", group_description="honkai guild commands"):
+    
     @app_commands.command(name="hoyovalk", description="fetch genshin client profile")
+    @commands.cooldown(1, 10, commands.BucketType.user)
+    @commands.cooldown(1, 5, commands.BucketType.guild)
     async def hoyovalk(self, ctx : Interaction, user: discord.User=None, query : str = None, create_rich_view : bool = False):
         if user is None:
             user : discord.User = ctx.user
@@ -94,19 +98,24 @@ class cog_honkai(commands.GroupCog, group_name="honkai", group_description="honk
         
         if query is None:
             battlesuits, successiful_run = await HOYO_PROCESSOR.get_honkai_all_battlesuits(profile.fields["Honkai ID"])
-            if not successiful_run:
+            if successiful_run is not None:
                 embed = Embedx.Error(
                     "Failed to fetch data",
                     "Please try again later"
                 )
+                embed.add_field(
+                    name="Error",
+                    value=f"```{successiful_run}```"
+                )
+                
                 return await ctx.response.send_message(embed=embed)
             
             # send a view
             #battlesuits.sort(key=lambda x: matching_rairty[x.rarity], reverse=True)
             
-            embed = honkai_characters_view.get_embed(battlesuits, 0)
+            embed = honkai_characters_view.get_embed(user.name, battlesuits, 0)
             
-            view = honkai_characters_view(user, battlesuits)
+            view = honkai_characters_view(ctx.user, user, battlesuits)
             return await ctx.response.send_message(embed=embed, view=view)
         
         if query.isdigit():
@@ -114,10 +123,14 @@ class cog_honkai(commands.GroupCog, group_name="honkai", group_description="honk
         
         # fetch hoyo profile
         battlesuit, successiful_run = await HOYO_PROCESSOR.get_honkai_character(profile.fields["Honkai ID"], query)
-        if not successiful_run:
+        if successiful_run is not None:
             embed = Embedx.Error(
                 "Failed to fetch data",
                 "Please try again later"
+            )
+            embed.add_field(
+                name="Error",
+                value=f"```{successiful_run}```"
             )
             return await ctx.response.send_message(embed=embed)
         
