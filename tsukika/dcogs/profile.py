@@ -7,6 +7,7 @@ from higanhanaSdk.frame import DcMainframe
 from tsukika.models import Profile, Trophy, TrophyRecord
 from tsukika.bot import mf
 from sqlalchemy.orm.attributes import flag_modified
+from higanhanaSdk.dc.interact import staticInteract
 
 class cog_profile(commands.GroupCog, group_name="profile", group_description="profile commands"):
     def __init__(self, bot):
@@ -104,6 +105,9 @@ class cog_profile(commands.GroupCog, group_name="profile", group_description="pr
     @commands.cooldown(1, 5, commands.BucketType.user)
     async def set_field(self, ctx : discord.Interaction, field : mf.config.PROFILE_FIELDS, value : str):
         profile = self.get_or_create_profile(ctx.user.id)
+        
+        if field.value in profile.fields and not staticInteract.has_any_role(ctx, None, "Bot Dev"):
+            return await ctx.response.send_message("You can't change this field")
         
         profile.fields[field.value] = value
         
