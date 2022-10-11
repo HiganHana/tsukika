@@ -59,7 +59,7 @@ class honkai_characters_view(View):
         
     async def interaction_check(self, interaction : Interaction):
         # check if user is the same
-        if interaction.user.id != self.author.id or interaction.user.id != self.target_user.id:
+        if interaction.user.id != self.author.id and interaction.user.id != self.target_user.id:
             await interaction.response.send_message("You are not the same person!", ephemeral=True)
             return False
         return True
