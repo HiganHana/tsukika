@@ -1,1 +1,5 @@
-git+https://github.com/HiganHana/higanhanaSdk.git#egg=higanhana-sdk
+orjson
+flask
+pydantic
+discord.py
+flask_sqlalchemy
